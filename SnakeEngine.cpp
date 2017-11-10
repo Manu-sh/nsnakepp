@@ -176,11 +176,9 @@ GameStatus SEngine<U,UU>::move(Movement mv) {
 to avoid making too many calls to I/O functions we write on memory and for the same reason (overhead) we don't call
 std functions like wstringstream */
 
-/*
-This is your last chance. After this, there is no turning back. You take the blue pill—the story ends,
+/* This is your last chance. After this, there is no turning back. You take the blue pill—the story ends,
 you wake up in your bed and believe whatever you want to believe. You take the red pill—you stay in Wonderland, 
-and I show you how deep the rabbit hole goes.
-*/
+and I show you how deep the rabbit hole goes. */
 
 #ifndef BLUE_PILL
 template <typename U, typename UU> 

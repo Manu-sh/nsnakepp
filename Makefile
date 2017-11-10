@@ -11,4 +11,4 @@ ifneq ($(wildcard $(CURSW_H)),)
 endif
 
 all: nsnake.cpp SnakeEngine.cpp Menu.cpp Cells.hpp utils.hpp
-	$(CXX) $(CXXFLAGS) -o nsnake nsnake.cpp $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o nsnakepp nsnake.cpp $(LDFLAGS)

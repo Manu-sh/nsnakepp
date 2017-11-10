@@ -158,7 +158,7 @@ int main() {
 	curs_set(0), timeout(0), noecho(), cbreak();
 
 	start_color();
-	init_pair(1, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(1, COLOR_CYAN, COLOR_BLACK);
 	attron(COLOR_PAIR(1));
 
 _new_game:
