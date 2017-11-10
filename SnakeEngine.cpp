@@ -40,11 +40,9 @@ class SEngine {
 		size_t length;
 		wchar_t *buffer;
 #endif
-
 		std::vector<std::vector<Cell>> board;
 		std::vector<Cell *> snake;
 		std::vector<Cell *> cp;
-
 		Movement prv_mv = (Movement)-1;
 
 		U xsz, ysz, food;
@@ -259,7 +257,6 @@ _draw_all:
 				buffer[k++] = L'\u2592';
 				buffer[k++] = L'\n';
 			}
-
 		}
 	}
 
