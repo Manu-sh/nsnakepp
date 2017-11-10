@@ -125,7 +125,7 @@ static inline int curskeyAsMv(int key) {
 	return ERR;
 }
 
-struct termios *tty_reset = NULL;
+struct termios *tty_reset;
 
 static void sighandler(int sig) {
 
@@ -172,13 +172,11 @@ _new_game:
 
 	for (volatile int c; ((c = getch()), true); napms(d.speed)) { 
 
-
 		if ((hold = curskeyAsMv(c)) != ERR) {
 			mv    = areOpposite((Movement)mv, (Movement)hold) ? mv : hold;
 			pause = false;
 			goto _move;
 		} 
-
 
 		if (c == ' ' || c == 'q' || c == '\r' || c == '\n') {
 
@@ -197,9 +195,7 @@ _new_game:
 
 		}
 
-
 		if (pause) continue;
-
 _move:
 		switch (stage->move((Movement)mv)) {
 
