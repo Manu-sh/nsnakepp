@@ -3,12 +3,6 @@
 #include <vector>
 #include <limits>
 
-#include "PILL.h"
-
-#ifdef BLUE_PILL
-	#include <sstream>
-#endif
-
 #include "utils.hpp"
 #include "Cells.hpp"
 
@@ -35,14 +29,10 @@ class SEngine {
 
 	private:
 		const static signed char offset[4][2];
-
-#ifndef BLUE_PILL
 		size_t length;
 		wchar_t *buffer;
-#endif
 		std::vector<std::vector<Cell>> board;
 		std::vector<Cell *> snake;
-		std::vector<Cell *> cp;
 		Movement prv_mv = (Movement)-1;
 
 		U xsz, ysz, food;
@@ -50,20 +40,13 @@ class SEngine {
 
 	public:
 		explicit SEngine(U xsz, U ysz, U food, UU score);
-
-#ifndef BLUE_PILL
 		~SEngine() { free(buffer); }
-#endif
 
 		GameStatus move(Movement mv);
 		UU get_score() const { return score; }
 		UU get_food()  const { return food;  }
 	
-#ifndef BLUE_PILL
 		const wchar_t * to_wstr(bool isFirstCall = false);
-#else
-		std::wstring to_wstr() const;
-#endif
 
 	private:
 		bool isInvalidMovement(Cell &head, Movement mv) {
@@ -78,12 +61,8 @@ const signed char SEngine<A,B>::offset[4][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 },
 
 template <typename U, typename UU>
 SEngine<U,UU>::SEngine(U xsz, U ysz, U food, UU score) 
-#ifndef BLUE_PILL
 	: xsz{xsz}, ysz{ysz}, food{food}, score{score}, buffer{NULL} {
-#else
-	: xsz{xsz}, ysz{ysz}, food{food}, score{score} {
-#endif
-	
+
 	bool flag = true;
 
 	if (xsz < 9 || ysz < 9)
@@ -111,9 +90,7 @@ SEngine<U,UU>::SEngine(U xsz, U ysz, U food, UU score)
 	snake[0] = &board[xsz/2][ysz/2].set_ctype(SNAKE);
 	snake[1] = &board[xsz/2][ysz/2+1].set_ctype(SNAKE);
 	prv_mv   = LEFT; // default orientation
-#ifndef BLUE_PILL
 	to_wstr(true);
-#endif
 
 }
 
@@ -127,7 +104,7 @@ GameStatus SEngine<U,UU>::move(Movement mv) {
 	if (isInvalidMovement(*snake[0], mv))
 		return GameStatus::LOST;
 
-	cp = snake;
+	std::vector<Cell *> cp {snake};
 	snake[0] = &board[snake[0]->X()+offset[mv][0]][snake[0]->Y()+offset[mv][1]]; // set the new snake head
 
 	if (snake[0]->isSnake())
@@ -176,11 +153,6 @@ GameStatus SEngine<U,UU>::move(Movement mv) {
 to avoid making too many calls to I/O functions we write on memory and for the same reason (overhead) we don't call
 std functions like wstringstream */
 
-/* This is your last chance. After this, there is no turning back. You take the blue pill—the story ends,
-you wake up in your bed and believe whatever you want to believe. You take the red pill—you stay in Wonderland, 
-and I show you how deep the rabbit hole goes. */
-
-#ifndef BLUE_PILL
 template <typename U, typename UU> 
 const wchar_t * SEngine<U,UU>::to_wstr(bool isFirstCall) {
 
@@ -275,8 +247,7 @@ _draw_all:
 #undef ISHEAD
 }
 
-#else
-
+#if 0
 // reassuring but slow
 template <typename U, typename UU> 
 std::wstring SEngine<U,UU>::to_wstr() const {

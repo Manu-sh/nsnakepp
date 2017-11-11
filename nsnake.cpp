@@ -4,7 +4,6 @@
 #include <curses.h>
 #include <signal.h>
 
-#include "PILL.h"
 #include "utils.hpp"
 #include "SnakeEngine.cpp"
 #include "Menu.cpp"
@@ -31,10 +30,9 @@ do {							      \
 	napms(500);					      \
 } while(0)
 
-#ifndef BLUE_PILL
 #define RENDER(_BOARD_, _LV_)					                   \
 	do {								           \
-		std::wstring ws {L"[RED PILL] "};                                  \
+		std::wstring ws;				                   \
 		ws += L"stage: ("  + std::to_wstring(_LV_)+L")";                   \
 		ws += L"\tscore: " + std::to_wstring(_BOARD_->get_score());        \
 		ws += L"\tfood: "  + std::to_wstring(_BOARD_->get_food()) + L"\n"; \
@@ -42,18 +40,7 @@ do {							      \
 		addwstr(ws.c_str());					           \
 		refresh();						           \
 	} while(0)
-#else
-#define RENDER(_BOARD_, _LV_)						           \
-	do {								           \
-		std::wstring ws {L"[BLUE PILL] "};                                 \
-		ws += L"stage: ("  + std::to_wstring(_LV_)+L")";                   \
-		ws += L"\tscore: " + std::to_wstring(_BOARD_->get_score());        \
-		ws += L"\tfood: "  + std::to_wstring(_BOARD_->get_food()) + L"\n"; \
-		mvaddwstr(0, 0, _BOARD_->to_wstr().c_str());                       \
-		addwstr(ws.c_str());					           \
-		refresh();						           \
-	} while(0)
-#endif
+
 
 struct SaveGame {
 
