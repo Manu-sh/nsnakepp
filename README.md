@@ -17,4 +17,4 @@ git clone https://github.com/Manu-sh/nsnakepp && make -C nsnakepp
 <img src="https://raw.githubusercontent.com/Manu-sh/nsnakepp/master/screenshots/01.jpg" width="450" height="250"/>
 
 
-###### Copyright © 2017, [Manu-sh](https://github.com/Manu-sh), s3gmentationfaul@gmail.com. Released under the [GPL3 license](LICENSE).
+###### Copyright © 2017, [Manu-sh](https://github.com/Manu-sh), s3gmentationfault@gmail.com. Released under the [GPL3 license](LICENSE).
