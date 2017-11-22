@@ -3,10 +3,10 @@
 #include <vector>
 #include <limits>
 
-#include "utils.hpp"
+#include "../utils.hpp"
 #include "Cells.hpp"
 
-enum Movement : char { UP, DOWN, LEFT, RIGHT };
+enum Movement : signed char { UP, DOWN, LEFT, RIGHT };
 enum class GameStatus : char { NONE, WIN, LOST };
 
 static bool inline areOpposite(Movement a, Movement b) {

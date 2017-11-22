@@ -5,7 +5,6 @@
 #include <signal.h>
 
 #include "utils.hpp"
-#include "SnakeEngine.cpp"
 #include "Menu.cpp"
 
 #define BOARD_XSZ (unsigned short)20
