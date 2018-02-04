@@ -4,8 +4,11 @@
 #include <stdexcept>
 #include <limits>
 #include <initializer_list>
-#include <signal.h>
-#include <menu.h>
+
+extern "C" {
+	#include <signal.h>
+	#include <menu.h>
+}
 
 #include "utils.hpp"
 
@@ -43,7 +46,7 @@ namespace SMenu {
 
 		public:
 			explicit Menu(const char *choice[], U xsz, U ysz, U xstart, U ystart);
-			~Menu() { delwin(wmenu); }
+			~Menu() { delwin(wmenu); wmenu=NULL; }
 			bool resize(U xsz, U ysz, U xstart, U ystart);
 			unsigned char render(std::initializer_list<WINDOW *> toclr); // return the index of choice
 

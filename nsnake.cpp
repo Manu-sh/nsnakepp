@@ -1,9 +1,13 @@
 #include <iostream>
 #include <cstdio>
 #include <memory>
-#include <curses.h>
-#include <signal.h>
 
+extern "C" {
+	#include <curses.h>
+	#include <signal.h>
+}
+
+#include "SnakeEngine.cpp"
 #include "utils.hpp"
 #include "Menu.cpp"
 

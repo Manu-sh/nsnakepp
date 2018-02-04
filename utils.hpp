@@ -1,8 +1,11 @@
 #pragma once
-#include <unistd.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <openssl/rand.h>
+
+extern "C" {
+	#include <unistd.h>
+	#include <termios.h>
+	#include <sys/ioctl.h>
+	#include <openssl/rand.h>
+}
 
 #define MIN(A,B) (((A) < (B)) ? (A) : (B))
 #define MAX(A,B) (((A) > (B)) ? (A) : (B))
