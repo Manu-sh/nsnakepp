@@ -88,7 +88,7 @@ struct SaveGame {
 
 	}
 
-	bool savegame() {
+	bool savegame() noexcept {
 
 		FILE *file;
 		if (!(file = std::fopen("checkpoint.sav", "w+")))
@@ -117,7 +117,7 @@ static inline int curskeyAsMv(int key) noexcept {
 
 struct termios *tty_reset;
 
-static void sighandler(int sig) {
+static void sighandler(int sig) noexcept {
 
 	extern struct termios *tty_reset;
 	endwin();
@@ -128,6 +128,7 @@ static void sighandler(int sig) {
 	exit(0);
 }
 
+using std::unique_ptr;
 int main() {
 
 	const char *choice[] = { "Resume", "New game", "Exit", NULL };
@@ -147,15 +148,15 @@ int main() {
 	keypad(stdscr, TRUE), nodelay(stdscr, TRUE), 
 	curs_set(0), timeout(0), noecho(), cbreak();
 
-	start_color();
-	init_pair(1, COLOR_CYAN, COLOR_BLACK);
-	attron(COLOR_PAIR(1));
+	// start_color();
+	// init_pair(1, COLOR_CYAN, COLOR_BLACK);
+	// attron(COLOR_PAIR(1));
 
 _new_game:
 
 	SaveGame d;
 	SMenu::Menu<> menu { choice, WMENU_XSZ, WMENU_YSZ, WXOFFSET(term_xsz), WYOFFSET(term_ysz) };
-	std::unique_ptr<SEngine<>> stage(new SEngine<>(BOARD_XSZ, BOARD_YSZ, d.lv_food, d.score));
+	unique_ptr<SEngine<>> stage(new SEngine<>(BOARD_XSZ, BOARD_YSZ, d.lv_food, d.score));
 
        	RENDER(stage, d.lv);
 	refresh();
@@ -177,10 +178,12 @@ _new_game:
 			if (choice[i] == choice[1]) {
 				d.delsavegame();
 				pause = true;
-				stage.reset(nullptr);
-				goto _new_game;
+
+				/*  destructors are called: http://en.cppreference.com/w/cpp/language/goto */
+				goto _new_game; 
+
 			} else if (choice[i] == choice[2]) {
-				goto _exit;
+				raise(SIGINT);
 			}
 
 		}
@@ -199,7 +202,7 @@ _move:
 				RENDER(stage, d.lv);
 				MSG_END_OF_STAGE("YOU LOST", d.lv, d.score);
 				// d.delsavegame();
-				goto _exit;
+				raise(SIGINT);
 
 			case GameStatus::WIN:
 				{
@@ -216,9 +219,5 @@ _move:
 
 	}
 
-_exit:
-	refresh();
-	endwin();
-	tcsetattr(STDIN_FILENO, TCSANOW, tty_reset);
-	return EXIT_SUCCESS;
+	raise(SIGINT);
 }

@@ -5,7 +5,7 @@
 
 #include "utils.hpp"
 
-enum Movement : signed char { UP, DOWN, LEFT, RIGHT };
+enum Movement : char { UP, DOWN, LEFT, RIGHT };
 enum class GameStatus : char { NONE, WIN, LOST };
 
 static bool inline areOpposite(Movement a, Movement b) noexcept {
@@ -13,48 +13,39 @@ static bool inline areOpposite(Movement a, Movement b) noexcept {
 		|| ((a == LEFT && b == RIGHT) || (a == RIGHT && b == LEFT));
 }
 
-template <typename U = unsigned char>
-struct Cells {
-	U x, y; 
-	bool operator==(const Cells &c) const noexcept { return this->x == c.x && this->y == c.y; }
-	bool operator!=(const Cells &c) const noexcept { return !(*this == c); }
-};
 
 template <typename U = unsigned char, typename UU = unsigned short>
 class SEngine {
 
 	static_assert(sizeof(UU) > sizeof(U), "generic typename UU is <= U, this can be dangerous");
 	static_assert(!std::is_signed<U>::value && !std::is_signed<UU>::value, "unsigned values only");
-	using Cell = Cells<U>;
 
-	private:
-		const static signed char offset[4][2];
-		std::list<Cell*> snake;
+	struct Cell {
+		U x, y; 
+		bool operator==(const Cell &c) const noexcept { return x == c.x && y == c.y; }
+		bool operator!=(const Cell &c) const noexcept { return !(*this == c); }
+	};
 
-		U xsz, ysz, lv_food;
-		UU score;
-
-		Cell food;
-		Movement prv_mv;
-
-		wchar_t *buffer;
-		size_t length;
-	
 	public:
 		explicit SEngine(U xsz, U ysz, U lv_food, UU score);
-		~SEngine() {
-			for (Cell *c : snake)
-				delete c;
-			free(buffer);
-		}
+		SEngine(const SEngine &) = delete;
+		SEngine(SEngine &&) = delete;
+		~SEngine();
+
+		SEngine & operator=(const SEngine &) = delete;
+		SEngine & operator=(SEngine &&) = delete;
+
+
+		UU get_score() const noexcept { return score; }
+		U  get_food()  const noexcept { return lv_food; }
 
 		GameStatus move(Movement mv);
-		UU get_score() const noexcept { return score; }
-		U get_food()   const noexcept { return lv_food; }
 		const wchar_t * to_wstr(bool isFirstCall = false) noexcept;
 
 	private:
-		Cell generate() { return Cell {random_range((U)0, (U)(xsz-1)), random_range((U)0, (U)(ysz-1))}; }
+		Cell generate() const noexcept { 
+			return Cell {rand_in_range((U)0, (U)(xsz-1)), rand_in_range((U)0, (U)(ysz-1))}; 
+		}
 
 		bool find(const Cell &b) const noexcept {
 			for (Cell *a : snake)
@@ -74,10 +65,23 @@ class SEngine {
 				head.y+offset[mv][1] <= -1 || head.y+offset[mv][1] >= ysz;
 		}
 
+
+
+	private:
+		const signed char offset[4][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+		std::list<Cell*> snake;
+
+		U xsz, ysz, lv_food;
+		UU score;
+
+		Cell food;
+		Movement prv_mv;
+
+		wchar_t *buffer;
+		size_t length;
+
 };
 
-template <typename A, typename B>
-const signed char SEngine<A,B>::offset[4][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
 
 template <typename U, typename UU>
 SEngine<U,UU>::SEngine(U xsz, U ysz, U lv_food, UU score)
@@ -97,6 +101,15 @@ SEngine<U,UU>::SEngine(U xsz, U ysz, U lv_food, UU score)
 	to_wstr(true);
 
 }
+
+template <typename U, typename UU>
+SEngine<U,UU>::~SEngine() {
+	for (Cell *c : snake)
+		delete c;
+
+	free(buffer);
+}
+
 
 template <typename U, typename UU>
 GameStatus SEngine<U,UU>::move(Movement mv) {
@@ -151,9 +164,7 @@ GameStatus SEngine<U,UU>::move(Movement mv) {
 
 /* horrible but fast, however should be rewritten, we draw borders and newline only the first time
 to avoid making too many calls to I/O functions we write on memory and for the same reason (overhead) we don't call
-std functions like wstringstream
-
-you can see src mtx_ver/SnakeEngine.cpp for an example of the same function that use wstringstream */
+std functions like wstringstream */
 
 template <typename U, typename UU>
 const wchar_t * SEngine<U,UU>::to_wstr(bool isFirstCall) noexcept {

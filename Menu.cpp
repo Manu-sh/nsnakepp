@@ -39,21 +39,21 @@ namespace SMenu {
 
 		private:
 			const char **choice;
-			unsigned char choice_len;
+			unsigned char choice_len {0};
 
-			WINDOW *wmenu;
+			WINDOW *wmenu {NULL};
 			U xsz, ysz, xstart, ystart;
 
 		public:
 			explicit Menu(const char *choice[], U xsz, U ysz, U xstart, U ystart);
-			~Menu() { delwin(wmenu); wmenu=NULL; }
+			~Menu() { delwin(wmenu); }
 			bool resize(U xsz, U ysz, U xstart, U ystart);
 			unsigned char render(std::initializer_list<WINDOW *> toclr); // return the index of choice
 
 	};
 
 	template <typename U> Menu<U>::Menu(const char *choice[], U xsz, U ysz, U xstart, U ystart)
-		: wmenu{NULL}, choice_len{0}, choice{choice}, xsz{xsz}, ysz{ysz}, xstart{xstart}, ystart{ystart}
+		: choice{choice}, xsz{xsz}, ysz{ysz}, xstart{xstart}, ystart{ystart}
 	{
 		if (!choice_len) for (;choice[choice_len];choice_len++);
 

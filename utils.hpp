@@ -1,4 +1,5 @@
 #pragma once
+#include <cmath>
 
 extern "C" {
 	#include <unistd.h>
@@ -10,12 +11,11 @@ extern "C" {
 #define MIN(A,B) (((A) < (B)) ? (A) : (B))
 #define MAX(A,B) (((A) > (B)) ? (A) : (B))
 
-// +1 is beacause without random_range(0, 2) => 0, 1 (like many random function)
 template <typename U>
-static inline U random_range(U from, U to) noexcept {
+static U rand_in_range(U from, U to) noexcept {
 	static U rbuf;
 	RAND_bytes((unsigned char *)&rbuf, (int)sizeof rbuf);
-	return (rbuf-from)%(to+1)+from;
+	return (((U)std::abs(rbuf)) % (to-from+1)) + from;
 }
 
 template <typename U>
