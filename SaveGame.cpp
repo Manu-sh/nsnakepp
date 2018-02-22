@@ -9,6 +9,11 @@ struct SaveGame {
 		loadgame();
 	}
 
+	SaveGame(const SaveGame &)	       = delete;
+	SaveGame(SaveGame &&)                  = delete;
+	SaveGame & operator=(const SaveGame &) = delete;
+	SaveGame & operator=(SaveGame &&)      = delete;
+
 	void nextlevel() noexcept {
 		score   += lv_food;
 		speed   -=(speed-2 > 0 ? 2 : 0); // ignore underflow, unreacheable for humans players

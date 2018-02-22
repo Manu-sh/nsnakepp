@@ -1,6 +1,4 @@
 #include <iostream>
-#include <cstdio>
-#include <cassert>
 #include <memory>
 
 extern "C" {

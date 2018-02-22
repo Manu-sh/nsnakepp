@@ -51,7 +51,7 @@ class Menu {
 
 };
 
-Menu::Menu(const char *const *const choice, const Geom &gm): choice{choice}, gm{gm} {
+Menu::Menu(const char *const *const choice, const Geom &gm): choice{choice}, gm(gm) {
 
 	if (!choice_len) while(choice[choice_len]) choice_len++;
 
