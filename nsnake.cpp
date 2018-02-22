@@ -40,16 +40,16 @@ do {							      \
 } while(0)
 
 
-#define RENDER(_BOARD_, _LV_)					                   \
-	do {								           \
-		std::wstring ws;				                   \
-		ws += L"stage: ("  + std::to_wstring(_LV_)+L")";                   \
-		ws += L"\tscore: " + std::to_wstring(_BOARD_->get_score());        \
-		ws += L"\tfood: "  + std::to_wstring(_BOARD_->get_food()) + L"\n"; \
-		mvaddwstr(0, 0, _BOARD_->to_wstr());                               \
-		addwstr(ws.c_str());					           \
-		refresh();						           \
-	} while(0)
+#define RENDER(_BOARD_, _LV_)					           \
+do {								           \
+	std::wstring ws;				                   \
+	ws += L"stage: ("  + std::to_wstring(_LV_)+L")";                   \
+	ws += L"\tscore: " + std::to_wstring(_BOARD_->get_score());        \
+	ws += L"\tfood: "  + std::to_wstring(_BOARD_->get_food()) + L"\n"; \
+	mvaddwstr(0, 0, _BOARD_->to_wstr());                               \
+	addwstr(ws.c_str());					           \
+	refresh();						           \
+} while(0)
 
 
 struct termios *tty_reset;
@@ -147,6 +147,7 @@ _new_game:
 				raise(SIGINT);
 			case JmpHandle::Jmp::JMP_PAUSED:
 				RENDER(stage, d.lv);
+				napms(130);
 				continue;
 		}
 
