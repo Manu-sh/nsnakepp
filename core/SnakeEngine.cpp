@@ -1,18 +1,12 @@
 #pragma once
 #include <stdexcept>
 #include <limits>
-#include <list>
+#include <vector>
 
-#include "utils.hpp"
+#include "random.hpp"
 
-enum Movement : char { UP, DOWN, LEFT, RIGHT };
-enum class GameStatus : char { NONE, WIN, LOST };
-
-static bool inline areOpposite(Movement a, Movement b) noexcept {
-	return ((a == UP && b == DOWN) || (a == DOWN && b == UP)) 
-		|| ((a == LEFT && b == RIGHT) || (a == RIGHT && b == LEFT));
-}
-
+enum Movement: char {  UP, DOWN, LEFT, RIGHT };
+enum class GameStatus: char { NONE, WIN, LOST };
 
 template <typename U = unsigned char, typename UU = unsigned short>
 class SEngine {
@@ -43,6 +37,20 @@ class SEngine {
 		const wchar_t * to_wstr(bool isFirstCall = false) noexcept;
 
 	private:
+		signed char offset[4][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+		std::vector<Cell*> snake;
+
+		U xsz, ysz, lv_food;
+		UU score;
+
+		Cell food;
+		Movement prv_mv;
+
+		wchar_t *buffer; /* wchar representation of the game */
+		size_t length;
+
+
+	private:
 		Cell generate() const noexcept { 
 			return Cell {rand_in_range((U)0, (U)(xsz-1)), rand_in_range((U)0, (U)(ysz-1))}; 
 		}
@@ -65,20 +73,11 @@ class SEngine {
 				head.y+offset[mv][1] <= -1 || head.y+offset[mv][1] >= ysz;
 		}
 
+		static bool inline areOpposite(Movement a, Movement b) noexcept {
+			return ((a == UP && b == DOWN) || (a == DOWN && b == UP)) 
+				|| ((a == LEFT && b == RIGHT) || (a == RIGHT && b == LEFT));
+		}
 
-
-	private:
-		const signed char offset[4][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
-		std::list<Cell*> snake;
-
-		U xsz, ysz, lv_food;
-		UU score;
-
-		Cell food;
-		Movement prv_mv;
-
-		wchar_t *buffer;
-		size_t length;
 
 };
 
@@ -114,8 +113,7 @@ SEngine<U,UU>::~SEngine() {
 template <typename U, typename UU>
 GameStatus SEngine<U,UU>::move(Movement mv) {
 
-	if (areOpposite(mv, prv_mv))
-		return GameStatus::NONE;
+	mv = areOpposite(mv, prv_mv) ? prv_mv : mv;
 
 	if (isInvalidMovement(*snake.front(), mv))
 		return GameStatus::LOST;

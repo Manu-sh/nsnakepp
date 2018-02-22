@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdio>
+#include <cassert>
 #include <memory>
 
 extern "C" {
@@ -7,12 +8,18 @@ extern "C" {
 	#include <signal.h>
 }
 
-#include "SnakeEngine.cpp"
+#include "core/SnakeEngine.cpp"
+
 #include "utils.hpp"
 #include "Menu.cpp"
+#include "SaveGame.cpp"
 
-#define BOARD_XSZ (unsigned short)20
-#define BOARD_YSZ (unsigned short)40
+typedef unsigned char uchar;
+typedef unsigned short ushort;
+typedef SEngine<uchar,ushort> SnakeEngine;
+
+#define BOARD_XSZ (ushort)20
+#define BOARD_YSZ (ushort)40
 #define WIN_XSZ BOARD_XSZ+5
 #define WIN_YSZ BOARD_YSZ*2+5
 #define WMENU_XSZ BOARD_XSZ
@@ -20,18 +27,20 @@ extern "C" {
 #define WXOFFSET(TERM_XSZ) (TERM_XSZ/2 - BOARD_XSZ/2)
 #define WYOFFSET(TERM_YSZ) (TERM_YSZ/2 - BOARD_YSZ)
 
+
 #define MSG_END_OF_STAGE(_MSG_, _LV_, _SCORE_)		      \
 do {							      \
 	napms(300);					      \
 	fflush(stdin);					      \
 	clear();					      \
 	printw("%s\n\tscore: %u\n\tlevel: ", _MSG_, _SCORE_); \
-	for (unsigned char i = 1; i <= _LV_; i++)	      \
+	for (uchar i = 1; i <= _LV_; i++)	              \
 		printw("\u2605 ");			      \
 	refresh();					      \
 	while (getch() == ERR);			              \
 	napms(500);					      \
 } while(0)
+
 
 #define RENDER(_BOARD_, _LV_)					                   \
 	do {								           \
@@ -45,79 +54,9 @@ do {							      \
 	} while(0)
 
 
-struct SaveGame {
-
-	unsigned short speed, score;
-	unsigned char lv_food, lv;
-
-	SaveGame(unsigned short speed  = 150, unsigned short score  =   0,
-		 unsigned char lv_food =   5, unsigned char lv      =   1) noexcept {
-
-		if (!loadgame()) {
-			this->speed   = speed;
-			this->score   = score;
-			this->lv_food = lv_food;
-			this->lv      = lv;
-		}
-
-	}
-
-	void nextlevel() noexcept {
-		score   += lv_food;
-		speed   -=(speed-2 > 0 ? 2 : 0); // ignore underflow, unreacheable for humans players
-		lv_food +=(lv_food+5 < std::numeric_limits<unsigned char>::max() ? 5 : 0);
-		lv++;
-	}
-
-	bool loadgame() noexcept { 
-
-		FILE *file;
-		unsigned short lv_food, lv;
-
-		if (!(file = std::fopen("checkpoint.sav", "r")))
-			return false;
-
-		std::fscanf(file, "%hu\t%hu\t%hu\t%hu", &speed, &score, &lv_food, &lv);
-
-		// workaround
-		this->lv_food = (unsigned char)lv_food;
-		this->lv      = (unsigned char)lv;
-
-		std::fclose(file);
-		return true;
-
-	}
-
-	bool savegame() noexcept {
-
-		FILE *file;
-		if (!(file = std::fopen("checkpoint.sav", "w+")))
-			return false;
-
-		std::fprintf(file, "%hu\t%hu\t%hu\t%hu", speed, score, lv_food, lv);
-		std::fclose(file);
-		return true;
-
-	}
-
-	void delsavegame() noexcept { remove("checkpoint.sav"); }
-};
-
-// ERR (from curses.h) if isn't a mv
-static inline int curskeyAsMv(int key) noexcept {
-	switch(key) {
-		case KEY_UP:    return UP;
-		case KEY_DOWN:  return DOWN;
-		case KEY_LEFT:  return LEFT;
-		case KEY_RIGHT: return RIGHT;
-	}
-	
-	return ERR;
-}
-
 struct termios *tty_reset;
 
-static void sighandler(int sig) noexcept {
+[[noreturn]] static void sighandler(int sig) noexcept {
 
 	extern struct termios *tty_reset;
 	endwin();
@@ -128,13 +67,56 @@ static void sighandler(int sig) noexcept {
 	exit(0);
 }
 
+class JmpHandle {
+
+	public:
+		enum class Jmp: char {
+			JMP_MV,      /* 0 - resume */
+			JMP_NEWGAME, /* 1 - new game */
+			JMP_EXIT,    /* 2 - exit */
+			JMP_PAUSED
+		};
+
+		JmpHandle(const Geom &gm) {
+			m = std::unique_ptr<Menu>(new Menu(choice, gm));
+		}
+
+		Jmp recvkev() noexcept {
+
+			int key = getch(); 
+
+			fflush(stdin);
+			while (getch() != ERR);
+
+			switch(key) {
+				case KEY_UP:    mov[0] = UP;    mov[1] = false; return Jmp::JMP_MV;
+				case KEY_DOWN:  mov[0] = DOWN;  mov[1] = false; return Jmp::JMP_MV;
+				case KEY_LEFT:  mov[0] = LEFT;  mov[1] = false; return Jmp::JMP_MV;
+				case KEY_RIGHT: mov[0] = RIGHT; mov[1] = false; return Jmp::JMP_MV;
+
+				case 'q': case ' ': case '\r': case '\n': /* display menu */
+				{
+					Jmp jmp = (Jmp)m->render({stdscr});
+					return (mov[1] = (jmp == Jmp::JMP_MV)) ? Jmp::JMP_PAUSED :jmp;
+				}
+			}
+
+			return mov[1] ? Jmp::JMP_PAUSED : Jmp::JMP_MV;
+		}
+
+		int recvmov() const noexcept { return mov[0]; }
+
+	private:
+		const char *choice[4] = { "Resume", "New game", "Exit", NULL };
+		std::unique_ptr<Menu> m;
+		int mov[2] = {-1, 1}; /* mov, isPaused? */
+
+};
+
 using std::unique_ptr;
 int main() {
 
-	const char *choice[] = { "Resume", "New game", "Exit", NULL };
-	unsigned short term_xsz = 0, term_ysz = 0;
-	int mv = ERR, hold = ERR;
-	bool pause = true;
+	unsigned short term_xsz, term_ysz;
 
 	tty_reset = set_max_baudrate();
 	signal(SIGINT, sighandler);
@@ -146,78 +128,52 @@ int main() {
 	mvwin(stdscr, WXOFFSET(term_xsz), WYOFFSET(term_ysz));
 
 	keypad(stdscr, TRUE), nodelay(stdscr, TRUE), 
-	curs_set(0), timeout(0), noecho(), cbreak();
-
-	// start_color();
-	// init_pair(1, COLOR_CYAN, COLOR_BLACK);
-	// attron(COLOR_PAIR(1));
+		curs_set(0), timeout(0), noecho(), cbreak();
 
 _new_game:
 
+	/*  destructors are called: http://en.cppreference.com/w/cpp/language/goto */
 	SaveGame d;
-	SMenu::Menu<> menu { choice, WMENU_XSZ, WMENU_YSZ, WXOFFSET(term_xsz), WYOFFSET(term_ysz) };
-	unique_ptr<SEngine<>> stage(new SEngine<>(BOARD_XSZ, BOARD_YSZ, d.lv_food, d.score));
+	JmpHandle jh{ { WMENU_XSZ, WMENU_YSZ, WXOFFSET(term_xsz), WYOFFSET(term_ysz) } };
+	unique_ptr<SnakeEngine> stage{new SnakeEngine(BOARD_XSZ, BOARD_YSZ, d.lv_food, d.score)};
 
-       	RENDER(stage, d.lv);
-	refresh();
+	do {
 
-	for (volatile int c; ((c = getch()), true); napms(d.speed)) { 
-
-		if ((hold = curskeyAsMv(c)) != ERR) {
-			mv    = areOpposite((Movement)mv, (Movement)hold) ? mv : hold;
-			pause = false;
-			goto _move;
-		} 
-
-		if (c == ' ' || c == 'q' || c == '\r' || c == '\n') {
-
-			pause = true;
-			unsigned char i = menu.render({stdscr});
-			RENDER(stage, d.lv);
-
-			if (choice[i] == choice[1]) {
+		switch(jh.recvkev()) {
+			case JmpHandle::Jmp::JMP_MV:
+				break;
+			case JmpHandle::Jmp::JMP_NEWGAME:
 				d.delsavegame();
-				pause = true;
-
-				/*  destructors are called: http://en.cppreference.com/w/cpp/language/goto */
-				goto _new_game; 
-
-			} else if (choice[i] == choice[2]) {
+				goto _new_game;
+			case JmpHandle::Jmp::JMP_EXIT:
 				raise(SIGINT);
-			}
-
+			case JmpHandle::Jmp::JMP_PAUSED:
+				RENDER(stage, d.lv);
+				continue;
 		}
 
-		if (pause) continue;
-_move:
-		switch (stage->move((Movement)mv)) {
+		switch (stage->move(((Movement)jh.recvmov()))) {
 
 			case GameStatus::NONE:
-
 				RENDER(stage, d.lv);
 				break;
 
 			case GameStatus::LOST:
-
 				RENDER(stage, d.lv);
 				MSG_END_OF_STAGE("YOU LOST", d.lv, d.score);
 				// d.delsavegame();
 				raise(SIGINT);
 
 			case GameStatus::WIN:
-				{
-					RENDER(stage, d.lv);
-					d.nextlevel();
-					d.savegame();
+				RENDER(stage, d.lv);
+				d.nextlevel();
+				d.savegame();
 
-					MSG_END_OF_STAGE("YOU WIN", d.lv, d.score);
-					stage.reset(new SEngine<>(BOARD_XSZ, BOARD_YSZ, d.lv_food, d.score));
-				}
-				break;
-
+				MSG_END_OF_STAGE("YOU WIN", d.lv, d.score);
+				stage.reset(new SEngine<>(BOARD_XSZ, BOARD_YSZ, d.lv_food, d.score));
 		}
 
-	}
+		napms(d.speed);
 
-	raise(SIGINT);
+	} while(1);
 }
