@@ -2,6 +2,7 @@
 #include <memory>
 
 extern "C" {
+	#include <locale.h>
 	#include <curses.h>
 	#include <signal.h>
 }

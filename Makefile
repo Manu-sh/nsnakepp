@@ -1,5 +1,7 @@
 # -Wall -Wextra -pedantic
-CXXFLAGS=-D_GNU_SOURCE -pipe -O3 -ffast-math -std=c++11 `pkg-config --cflags ncursesw libcrypto`
+
+#MPX=-mmpx -fcheck-pointer-bounds
+CXXFLAGS=-D_GNU_SOURCE -pipe -O3 -ffast-math -std=c++11 `pkg-config --cflags ncursesw libcrypto` $(MPX)
 LDLIBS=`pkg-config --libs ncursesw libcrypto`
 
 .PHONY: all clean
