@@ -6,6 +6,7 @@ extern "C" {
 	#include <sys/ioctl.h>
 }
 
+#if 0
 template <typename U>
 static void get_term_sz(U *rows, U *cols) noexcept {
 	static struct winsize max;
@@ -13,6 +14,7 @@ static void get_term_sz(U *rows, U *cols) noexcept {
 	*rows = (U)max.ws_row;
 	*cols = (U)max.ws_col;
 }
+#endif
 
 
 // return a backup structure or null

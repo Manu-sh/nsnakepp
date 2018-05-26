@@ -55,7 +55,7 @@ class SEngine {
 			return Cell {rand_in_range((U)0, (U)(xsz-1)), rand_in_range((U)0, (U)(ysz-1))}; 
 		}
 
-		bool find(const Cell &b) const noexcept {
+		inline bool find(const Cell &b) const noexcept {
 			for (Cell *a : snake)
 				if (*a == b) return true;
 			return false;

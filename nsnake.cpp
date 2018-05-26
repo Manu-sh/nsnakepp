@@ -1,10 +1,10 @@
 #include <iostream>
 #include <memory>
+#include <csignal>
+#include <locale>
 
 extern "C" {
-	#include <locale.h>
 	#include <curses.h>
-	#include <signal.h>
 }
 
 #include "core/SnakeEngine.cpp"
@@ -26,11 +26,10 @@ typedef SEngine<uchar,ushort> SnakeEngine;
 #define WXOFFSET(TERM_XSZ) (TERM_XSZ/2 - BOARD_XSZ/2)
 #define WYOFFSET(TERM_YSZ) (TERM_YSZ/2 - BOARD_YSZ)
 
-
 #define MSG_END_OF_STAGE(_MSG_, _LV_, _SCORE_)		      \
 do {							      \
 	napms(300);					      \
-	fflush(stdin);					      \
+	while (getch() != ERR);                               \
 	clear();					      \
 	printw("%s\n\tscore: %u\n\tlevel: ", _MSG_, _SCORE_); \
 	for (uchar i = 1; i <= _LV_; i++)	              \
@@ -55,7 +54,13 @@ do {								           \
 
 struct termios *tty_reset;
 
-[[noreturn]] static void sighandler(int sig) noexcept {
+/* 
+unfortunately as per standard:
+Terminating the program without leaving the current block (e.g., by calling the function
+std::exit(int) (18.5)) does not destroy any objects with automatic storage duration (12.4).
+*/
+
+[[noreturn]] static void sighandler(int unused) {
 
 	extern struct termios *tty_reset;
 	endwin();
@@ -76,15 +81,13 @@ class JmpHandle {
 			JMP_PAUSED
 		};
 
-		JmpHandle(const Geom &gm) {
+		explicit JmpHandle(const Geom &gm) {
 			m = std::unique_ptr<Menu>(new Menu(choice, gm));
 		}
 
 		Jmp recvkev() noexcept {
 
 			int key = getch(); 
-
-			fflush(stdin);
 			while (getch() != ERR);
 
 			switch(key) {
@@ -113,15 +116,17 @@ class JmpHandle {
 };
 
 using std::unique_ptr;
-int main() {
+using std::setlocale;
 
-	unsigned short term_xsz, term_ysz;
+int main() {
 
 	tty_reset = set_max_baudrate();
 	signal(SIGINT, sighandler);
-	get_term_sz(&term_xsz, &term_ysz);
 	setlocale(LC_ALL, "");
 	initscr();
+
+	extern int LINES, COLS;
+	unsigned short term_xsz = LINES, term_ysz = COLS;
 
 	wresize(stdscr, WIN_XSZ, WIN_YSZ); 
 	mvwin(stdscr, WXOFFSET(term_xsz), WYOFFSET(term_ysz));
@@ -145,7 +150,7 @@ _new_game:
 				d.delsavegame();
 				goto _new_game;
 			case JmpHandle::Jmp::JMP_EXIT:
-				raise(SIGINT);
+				return 0;
 			case JmpHandle::Jmp::JMP_PAUSED:
 				RENDER(stage, d.lv);
 				napms(130);
@@ -162,7 +167,7 @@ _new_game:
 				RENDER(stage, d.lv);
 				MSG_END_OF_STAGE("YOU LOST", d.lv, d.score);
 				// d.delsavegame();
-				raise(SIGINT);
+				return 0;
 
 			case GameStatus::WIN:
 				RENDER(stage, d.lv);
@@ -176,4 +181,6 @@ _new_game:
 		napms(d.speed);
 
 	} while(1);
+
+	return 0;
 }

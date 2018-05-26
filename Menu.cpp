@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <limits>
 #include <cstring>
 #include <stdexcept>
 #include <initializer_list>
@@ -116,6 +117,7 @@ unsigned char Menu::render(std::initializer_list<WINDOW *> toclr) noexcept {
 	}
 
        	/* unreacheable */
+	return UCHAR_MAX;
 }
 
 #if 0
