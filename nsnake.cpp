@@ -150,7 +150,7 @@ _new_game:
 				d.delsavegame();
 				goto _new_game;
 			case JmpHandle::Jmp::JMP_EXIT:
-				return 0;
+				raise(SIGINT);
 			case JmpHandle::Jmp::JMP_PAUSED:
 				RENDER(stage, d.lv);
 				napms(130);
@@ -167,7 +167,7 @@ _new_game:
 				RENDER(stage, d.lv);
 				MSG_END_OF_STAGE("YOU LOST", d.lv, d.score);
 				// d.delsavegame();
-				return 0;
+				raise(SIGINT);
 
 			case GameStatus::WIN:
 				RENDER(stage, d.lv);
