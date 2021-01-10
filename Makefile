@@ -1,5 +1,5 @@
 #MPX=-mmpx -fcheck-pointer-bounds
-CXXFLAGS=-D_GNU_SOURCE -Wall -Wextra -pedantic -ansi -pipe -O3 -ffast-math -std=c++11 `pkg-config --cflags ncursesw libcrypto` $(MPX)
+CXXFLAGS=-D_GNU_SOURCE -Wall -Wextra -pedantic -ansi -pipe -O3 -ffast-math -Wno-unused-function -fstack-protector-all -fstack-protector-strong -fsanitize=address -fsanitize=undefined -funroll-loops -march=native -std=c++11 `pkg-config --cflags ncursesw libcrypto` $(MPX)
 LDLIBS=`pkg-config --libs ncursesw libcrypto`
 
 .PHONY: all clean
