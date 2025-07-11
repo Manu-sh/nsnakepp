@@ -666,6 +666,10 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU GPL, see
 <http://www.gnu.org/licenses/>.
 
+As a special exception, you have permission to link this program with 
+the OpenSSL library and distribute executables, as long as you follow the terms
+of the GPL in all respects except for the OpenSSL license terms.
+
   The GNU General Public License does not permit incorporating your program
 into proprietary programs.  If your program is a subroutine library, you
 may consider it more useful to permit linking proprietary applications with
